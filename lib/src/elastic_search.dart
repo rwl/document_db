@@ -4,7 +4,13 @@ import 'dart:async';
 import 'package:elastic_dart/browser_client.dart';
 import 'document_db.dart';
 
-Future<DocumentDb> open(String uri, [List<Store> schema, int version]) {}
+Future<DocumentDb> open(
+    [String uri = 'http://127.0.0.1:9200',
+    List<Store> schema,
+    int version]) async {
+  var es = new Elasticsearch(uri);
+  return new ElasticSearchDb(es);
+}
 
 class ElasticSearchDb<K> implements DocumentDb<K> {
   final Elasticsearch es;

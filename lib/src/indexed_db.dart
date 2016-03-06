@@ -39,7 +39,9 @@ Future<ddb.DocumentDb> open(String uri,
         }
 
         spec.indexes.forEach((index) {
-          store.createIndex(index.name, index.field, unique: index.unique);
+          if (!store.indexNames.contains(index.name)) {
+            store.createIndex(index.name, index.field, unique: index.unique);
+          }
         });
 
         var indexNames = spec.indexes.map((idx) => idx.name).toSet();

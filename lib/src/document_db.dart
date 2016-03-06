@@ -65,3 +65,7 @@ abstract class DocumentStore<K> {
 
   Future<int> count([String name, value]);
 }
+
+abstract class DocumentIndex<K> extends DocumentStore<K> {
+  Stream<Map> search(String query);
+}
