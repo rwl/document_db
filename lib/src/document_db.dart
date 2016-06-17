@@ -45,13 +45,13 @@ abstract class DocumentStore<K> {
 
   Future<Map> get(K key);
 
-  Stream<K> addAll(Iterable<Map> docs);
+  Stream<Entry<K>> addAll(Iterable<Map> docs);
 
-  Stream<K> putAll(Iterable<Map> docs);
+  Stream<Entry<K>> putAll(Iterable<Map> docs);
 
   Future deleteAll(Iterable<K> keys);
 
-  Stream<Map> getAll(Iterable<K> keys);
+  Stream<Entry<K>> getAll(Iterable<K> keys);
 
   Future clear();
 
@@ -64,4 +64,10 @@ abstract class DocumentStore<K> {
   Stream<K> findAllKeys(String name, value, {int offset, int limit});
 
   Future<int> count([String name, value]);
+}
+
+class Entry<K> {
+  final K key;
+  final Map doc;
+  Entry(this.key, this.doc);
 }

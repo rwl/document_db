@@ -6,7 +6,7 @@ import 'package:document_db/document_db.dart';
 
 int rint() => new Random().nextInt(9999);
 
-dbTest(OpenDb open, String uri) {
+dbTest(OpenDb open, String uri, [DocumentCache mkCache()]) {
   group('db', () {
     test('open', () async {
       var spec = new Store('store1');
@@ -56,6 +56,9 @@ dbTest(OpenDb open, String uri) {
       var spec = new Store('store3', [new Index('title'), new Index('name')]);
       db = await open(uri, [spec]);
       store = db.store(spec.name);
+      if (mkCache != null) {
+        store = new CachedDocumentStore(store, mkCache());
+      }
     });
 
     tearDown(() {

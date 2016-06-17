@@ -2,7 +2,9 @@ name: document_db
 description: A common interface for IndexedDB and MongoDB
 dependencies:
   browser: any
-  mongo_dart: any
   bson: any
+  memcache: any
+  mongo_dart: any
+  quiver: any
 dev_dependencies:
   test: any

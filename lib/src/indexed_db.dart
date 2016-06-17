@@ -39,7 +39,9 @@ Future<ddb.DocumentDb> open(String uri,
         }
 
         spec.indexes.forEach((index) {
-          store.createIndex(index.name, index.field, unique: index.unique);
+          if (!store.indexNames.contains(index.name)) {
+            store.createIndex(index.name, index.field, unique: index.unique);
+          }
         });
 
         var indexNames = spec.indexes.map((idx) => idx.name).toSet();
@@ -120,8 +122,8 @@ class IndexedDbDocumentStore<K> implements ddb.DocumentStore<K> {
     return store.getObject(key);
   }
 
-  Stream<K> addAll(Iterable<Map> docs) {
-    var ctrl = new StreamController<K>();
+  Stream<ddb.Entry<K>> addAll(Iterable<Map> docs) {
+    var ctrl = new StreamController<ddb.Entry<K>>();
     var transaction = _db.transaction(_name, 'readwrite');
     transaction.onComplete.listen((_) {
       return ctrl.close();
@@ -133,14 +135,14 @@ class IndexedDbDocumentStore<K> implements ddb.DocumentStore<K> {
         doc[ddb.DocumentStore.KEY] = _generateKey();
       }
       store.add(doc).then((key) {
-        ctrl.add(key);
+        ctrl.add(new ddb.Entry<K>(key, doc));
       });
     }
     return ctrl.stream;
   }
 
-  Stream<K> putAll(Iterable<Map> docs) {
-    var ctrl = new StreamController<K>();
+  Stream<ddb.Entry<K>> putAll(Iterable<Map> docs) {
+    var ctrl = new StreamController<ddb.Entry<K>>();
     var transaction = _db.transaction(_name, 'readwrite');
     transaction.onComplete.listen((_) {
       return ctrl.close();
@@ -152,7 +154,7 @@ class IndexedDbDocumentStore<K> implements ddb.DocumentStore<K> {
         doc[ddb.DocumentStore.KEY] = _generateKey();
       }
       store.put(doc).then((putted) {
-        ctrl.add(putted);
+        ctrl.add(new ddb.Entry<K>(putted, doc));
       });
     }
     return ctrl.stream;
@@ -166,8 +168,8 @@ class IndexedDbDocumentStore<K> implements ddb.DocumentStore<K> {
     }
   }
 
-  Stream<Map> getAll(Iterable keys) {
-    var ctrl = new StreamController<Map>();
+  Stream<ddb.Entry<K>> getAll(Iterable keys) {
+    var ctrl = new StreamController<ddb.Entry<K>>();
     var transaction = _db.transaction(_name, 'readwrite'); // FIXME: 'readonly'
     transaction.onComplete.listen((_) {
       return ctrl.close();
@@ -175,7 +177,7 @@ class IndexedDbDocumentStore<K> implements ddb.DocumentStore<K> {
     var store = transaction.objectStore(_name);
     for (var key in keys) {
       store.getObject(key).then((got) {
-        ctrl.add(got);
+        ctrl.add(new ddb.Entry<K>(key, got));
       });
     }
     return ctrl.stream;

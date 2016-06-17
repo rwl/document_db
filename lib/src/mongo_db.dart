@@ -141,8 +141,8 @@ class MongoDbDocumentStore<K> implements ddb.DocumentStore<K> {
   Future<Map> get(K key) =>
       _collecton.findOne(where.eq(ddb.DocumentStore.KEY, key));
 
-  Stream<K> addAll(Iterable<Map> docs) {
-    var ctrl = new StreamController<K>();
+  Stream<ddb.Entry<K>> addAll(Iterable<Map> docs) {
+    var ctrl = new StreamController<ddb.Entry<K>>();
     docs = docs.map((doc) {
       if (doc[ddb.DocumentStore.KEY] == null) {
         doc = new Map.from(doc);
@@ -152,7 +152,7 @@ class MongoDbDocumentStore<K> implements ddb.DocumentStore<K> {
     });
     _collecton.insertAll(docs.toList()).then((_) {
       for (var doc in docs) {
-        ctrl.add(doc[ddb.DocumentStore.KEY]);
+        ctrl.add(new ddb.Entry<K>(doc.remove(ddb.DocumentStore.KEY), doc));
       }
     }).then((_) {
       return ctrl.close();
@@ -160,15 +160,15 @@ class MongoDbDocumentStore<K> implements ddb.DocumentStore<K> {
     return ctrl.stream;
   }
 
-  Stream<K> putAll(Iterable<Map> docs) {
-    var ctrl = new StreamController<K>();
+  Stream<ddb.Entry<K>> putAll(Iterable<Map> docs) {
+    var ctrl = new StreamController<ddb.Entry<K>>();
     Future.wait(docs.map((doc) {
       if (doc[ddb.DocumentStore.KEY] == null) {
         doc = new Map.from(doc);
         doc[ddb.DocumentStore.KEY] = _generateKey();
       }
       return _collecton.save(doc).then((_) {
-        ctrl.add(doc[ddb.DocumentStore.KEY]);
+        ctrl.add(new ddb.Entry<K>(doc.remove(ddb.DocumentStore.KEY), doc));
       });
     })).then((_) {
       return ctrl.close();
@@ -182,8 +182,11 @@ class MongoDbDocumentStore<K> implements ddb.DocumentStore<K> {
         .then((_) => null);
   }
 
-  Stream<Map> getAll(Iterable keys) =>
-      _collecton.find(where.oneFrom(ddb.DocumentStore.KEY, keys.toList()));
+  Stream<ddb.Entry<K>> getAll(Iterable keys) {
+    return _collecton
+        .find(where.oneFrom(ddb.DocumentStore.KEY, keys.toList()))
+        .map((doc) => new ddb.Entry<K>(doc.remove(ddb.DocumentStore.KEY), doc));
+  }
 
   Future clear() => _collecton.remove({}).then((_) => null);
 
